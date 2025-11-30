@@ -1,17 +1,22 @@
 models:
   - name: stg_jaffle_shop__customers
+    description: "This model contains one row per unique customer, staged from the raw Jaffle Shop data."
     columns:
       - name: customer_id
+        description: "The unique primary key for the customer."
         tests:
           - unique
           - not_null
   - name: stg_jaffle_shop__orders
+    description: "This model contains one row per order, staged from the raw Jaffle Shop data."
     columns:
       - name: order_id
+        description: "The unique primary key for the order."
         tests:
          - unique
          - not_null
       - name: status
+        description: "{{ doc('order_status') }}"
         data_tests:
           - accepted_values:
               arguments:
@@ -22,6 +27,7 @@ models:
                   - placed
                   - return_pending
       - name: customer_id
+        description: "The foreign key linking the order to the customer who placed it."
         data_tests:
           - relationships:
               arguments:
