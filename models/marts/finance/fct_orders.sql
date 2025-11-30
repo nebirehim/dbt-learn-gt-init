@@ -1,17 +1,30 @@
--- ...existing code...
-select
-    o.order_id,
-    o.customer_id,
-    coalesce(p.total_amount, 0) as payment_amount,
-    o.order_date,
-    o.status
-from {{ ref('stg_jaffle_shop__orders') }} as o
-left join (
-    -- aggregate payments per order to avoid multiplicative joins when there are multiple payments
+with orders as  (
+    select * from {{ ref ('stg_jaffle_shop__orders' )}}
+),
+
+payments as (
+    select * from {{ ref ('stg_stripe__payments') }}
+),
+
+order_payments as (
     select
-        orderid as order_id,
-        sum(amount) as total_amount
-    from {{ ref('stg_stripe__payments') }}
-    group by orderid
-) as p
-    on o.order_id = p.order_id
+        order_id,
+        sum (case when status = 'success' then amount end) as amount
+
+    from payments
+    group by 1
+),
+
+ final as (
+
+    select
+        orders.order_id,
+        orders.customer_id,
+        orders.order_date,
+        coalesce (order_payments.amount, 0) as amount
+
+    from orders
+    left join order_payments using (order_id)
+)
+
+select * from final
